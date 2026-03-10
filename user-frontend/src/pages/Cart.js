@@ -2,9 +2,14 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 const Cart = () => {
   const navigate = useNavigate();
-  const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem('cart') || '[]'));
+  const [cart, setCart] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('cart') || '[]'); }
+    catch { return []; }
+  });
   const [orderType, setOrderType] = useState('Dine In');
   const [showModal, setShowModal] = useState(false);
   const [instructions, setInstructions] = useState('');
@@ -14,8 +19,10 @@ const Cart = () => {
   const swipeRef = useRef(null);
   const maxSwipe = 260;
 
-  // ALL hooks above — no early returns before this line
-  const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+  const userInfo = (() => {
+    try { return JSON.parse(localStorage.getItem('userInfo') || '{}'); }
+    catch { return {}; }
+  })();
 
   const updateQty = (id, delta) => {
     const newCart = cart.map(i => i._id === id ? { ...i, quantity: Math.max(1, i.quantity + delta) } : i);
@@ -44,9 +51,10 @@ const Cart = () => {
         name: i.name,
         quantity: i.quantity,
         price: i.price,
-        size: i.size || '14"'
+        size: i.size || '14"',
+        avgPrepTime: Number(i.avgPrepTime) || 0
       }));
-      await axios.post('/api/orders', {
+      await axios.post(`${API}/api/orders`, {
         items,
         orderType,
         userName: userInfo.name,
@@ -61,7 +69,8 @@ const Cart = () => {
       setSuccess('Order placed successfully! 🎉');
       setTimeout(() => navigate('/orders'), 2000);
     } catch (err) {
-      alert('Failed to place order. Please try again.');
+      console.error('[Cart] Order error:', err.response?.data || err.message);
+      alert(err.response?.data?.message || 'Failed to place order: ' + (err.message || 'Unknown error'));
       setSwipeX(0);
     }
     setLoading(false);
@@ -109,7 +118,6 @@ const Cart = () => {
     setSwipeX(0);
   };
 
-  // Early returns AFTER all hooks
   if (success) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', gap: 16 }}>
@@ -146,8 +154,8 @@ const Cart = () => {
           <>
             {cart.map(item => (
               <div className="selected-item-card" key={item._id}>
-                {item.image
-                  ? <img className="selected-item-img" src={`http://localhost:5000${item.image}`} alt={item.name} />
+                {item.image && item.image.trim() !== ''
+                  ? <img className="selected-item-img" src={`${API}${item.image}`} alt={item.name} onError={e => e.target.style.display = 'none'} />
                   : <div className="selected-item-img" style={{ background: '#e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36 }}>🍕</div>
                 }
                 <div className="selected-item-info">

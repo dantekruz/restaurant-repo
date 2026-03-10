@@ -17,7 +17,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true); setError('');
     try {
-      const res = await axios.post('/api/auth/login', { email: form.email, password: form.password });
+      const res = await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/login`, { email: form.email, password: form.password });
       if (res.data.user.role !== 'admin') { setError('Admin access only'); setLoading(false); return; }
       localStorage.setItem('adminToken', res.data.token);
       localStorage.setItem('adminUser', JSON.stringify(res.data.user));
@@ -32,7 +32,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true); setError('');
     try {
-      await axios.post('/api/auth/forgot-password', { email: form.email });
+      await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/forgot-password`, { email: form.email });
       setSuccess('OTP sent to your email');
       setMode('otp');
     } catch (err) {
@@ -45,7 +45,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true); setError('');
     try {
-      await axios.post('/api/auth/verify-otp', { email: form.email, otp: form.otp });
+      await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/verify-otp`, { email: form.email, otp: form.otp });
       setMode('reset');
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid OTP');
@@ -57,7 +57,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true); setError('');
     try {
-      await axios.post('/api/auth/reset-password', { email: form.email, otp: form.otp, newPassword: form.newPassword });
+      await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/reset-password`, { email: form.email, otp: form.otp, newPassword: form.newPassword });
       setSuccess('Password reset! Please login.');
       setMode('login');
     } catch (err) {

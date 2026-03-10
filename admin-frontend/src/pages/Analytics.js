@@ -8,8 +8,8 @@ const Analytics = () => {
   const token = localStorage.getItem('adminToken');
 
   useEffect(() => {
-    axios.get('/api/analytics', { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => setAnalytics(r.data)).catch(() => {});
+    axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/analytics`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => setAnalytics(r.data && typeof r.data === "object" ? r.data : null)).catch(() => {});
   }, []);
 
   const revenueData = ['Mon','Tue','Wed','Thur','Fri','Sat','Sun'].map((day, i) => ({

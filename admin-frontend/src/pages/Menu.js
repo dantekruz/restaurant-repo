@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import axios from 'axios';
 
+const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const CATEGORIES = ['Burger', 'Pizza', 'Drink', 'French fries', 'Veggies'];
 
 const Menu = () => {
@@ -20,8 +21,12 @@ const Menu = () => {
   useEffect(() => { fetchMenu(); }, []);
 
   const fetchMenu = async () => {
-    const res = await axios.get('/api/menu');
-    setMenuItems(res.data);
+    try {
+      const res = await axios.get(`${API}/api/menu`);
+      setMenuItems(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      setMenuItems([]);
+    }
   };
 
   const handleImageChange = (e) => {
@@ -47,9 +52,8 @@ const Menu = () => {
       avgPrepTime: item.avgPrepTime || '',
       category: item.category
     });
-    setImagePreview(item.image ? `http://localhost:5000${item.image}` : null);
+    setImagePreview(item.image ? `${API}${item.image}` : null);
     setImageFile(null);
-    // Scroll to top of form
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -65,10 +69,10 @@ const Menu = () => {
 
     try {
       if (editingId) {
-        await axios.put(`/api/menu/${editingId}`, data, { headers });
+        await axios.put(`${API}/api/menu/${editingId}`, data, { headers });
         setSuccess('Item updated successfully!');
       } else {
-        await axios.post('/api/menu', data, { headers });
+        await axios.post(`${API}/api/menu`, data, { headers });
         setSuccess('Item added successfully!');
       }
       resetForm();
@@ -81,15 +85,17 @@ const Menu = () => {
 
   const deleteItem = async (id) => {
     if (window.confirm('Delete this item?')) {
-      await axios.delete(`/api/menu/${id}`, { headers });
-      if (editingId === id) resetForm();
-      fetchMenu();
+      try {
+        await axios.delete(`${API}/api/menu/${id}`, { headers });
+        if (editingId === id) resetForm();
+        fetchMenu();
+      } catch {}
     }
   };
 
   const filteredItems = activeCategory === 'All'
-    ? menuItems
-    : menuItems.filter(i => i.category === activeCategory);
+    ? (Array.isArray(menuItems) ? menuItems : [])
+    : (Array.isArray(menuItems) ? menuItems : []).filter(i => i.category === activeCategory);
 
   return (
     <div className="layout">
@@ -103,70 +109,28 @@ const Menu = () => {
           {/* LEFT — Form */}
           <div className="menu-form">
 
-            {/* Edit mode banner */}
             {editingId && (
-              <div style={{
-                background: '#EEF2FF',
-                border: '1px solid #C7D2FE',
-                borderRadius: 10,
-                padding: '10px 14px',
-                marginBottom: 16,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                fontSize: 13
-              }}>
+              <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: 10, padding: '10px 14px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13 }}>
                 <span style={{ color: '#4338CA', fontWeight: 600 }}>✏️ Editing: {form.name}</span>
-                <button
-                  onClick={resetForm}
-                  style={{
-                    background: 'none', border: 'none',
-                    color: '#6366F1', cursor: 'pointer',
-                    fontSize: 12, fontWeight: 600
-                  }}
-                >
-                  Cancel Edit ✕
-                </button>
+                <button onClick={resetForm} style={{ background: 'none', border: 'none', color: '#6366F1', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>Cancel Edit ✕</button>
               </div>
             )}
 
-            {/* Image upload */}
-            <label htmlFor="img-upload" style={{
-              width: 120, height: 100,
-              border: `2px ${editingId ? 'solid #6366F1' : 'solid #E0E0E0'}`,
-              borderRadius: 8,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              marginBottom: 24,
-              overflow: 'hidden',
-              position: 'relative',
-              background: '#fafafa'
-            }}>
+            <label htmlFor="img-upload" style={{ width: 120, height: 100, border: `2px ${editingId ? 'solid #6366F1' : 'solid #E0E0E0'}`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', marginBottom: 24, overflow: 'hidden', position: 'relative', background: '#fafafa' }}>
               {imagePreview
                 ? <img src={imagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 : <span style={{ fontSize: 36, color: '#ccc' }}>🖼️</span>
               }
               {imagePreview && (
-                <div style={{
-                  position: 'absolute', inset: 0,
-                  background: 'rgba(0,0,0,0.3)',
-                  display: 'flex', alignItems: 'center',
-                  justifyContent: 'center', opacity: 0,
-                  transition: 'opacity 0.2s',
-                  color: 'white', fontSize: 12, fontWeight: 600
-                }}
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s', color: 'white', fontSize: 12, fontWeight: 600 }}
                   onMouseEnter={e => e.currentTarget.style.opacity = 1}
-                  onMouseLeave={e => e.currentTarget.style.opacity = 0}
-                >
+                  onMouseLeave={e => e.currentTarget.style.opacity = 0}>
                   Change
                 </div>
               )}
             </label>
             <input id="img-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageChange} />
 
-            {/* Form fields */}
             <div className="form-group">
               <label className="form-label">name</label>
               <input className="form-input" placeholder="name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
@@ -194,29 +158,11 @@ const Menu = () => {
             {success && <div className="success-msg">{success}</div>}
 
             <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                className="btn-add-dish"
-                onClick={handleSubmit}
-                style={{
-                  background: editingId ? '#4338CA' : '#1E1E2D',
-                  flex: 1
-                }}
-              >
+              <button className="btn-add-dish" onClick={handleSubmit} style={{ background: editingId ? '#4338CA' : '#1E1E2D', flex: 1 }}>
                 {editingId ? '💾 Save Changes' : 'Add New Dish'}
               </button>
               {editingId && (
-                <button
-                  onClick={resetForm}
-                  style={{
-                    background: 'white',
-                    color: '#666',
-                    border: '1px solid #E0E0E0',
-                    borderRadius: 8,
-                    padding: '12px 16px',
-                    cursor: 'pointer',
-                    fontSize: 13
-                  }}
-                >
+                <button onClick={resetForm} style={{ background: 'white', color: '#666', border: '1px solid #E0E0E0', borderRadius: 8, padding: '12px 16px', cursor: 'pointer', fontSize: 13 }}>
                   Cancel
                 </button>
               )}
@@ -226,7 +172,6 @@ const Menu = () => {
           {/* RIGHT — Preview + Items List */}
           <div className="menu-preview-panel">
 
-            {/* Live Preview */}
             <div className="preview-item-card">
               <div className="preview-item-img">
                 {imagePreview
@@ -241,116 +186,36 @@ const Menu = () => {
               </div>
             </div>
 
-            <button
-              className="btn-add-item"
-              onClick={handleSubmit}
-              style={{ background: editingId ? '#4338CA' : '#D32F2F', marginBottom: 16 }}
-            >
+            <button className="btn-add-item" onClick={handleSubmit} style={{ background: editingId ? '#4338CA' : '#D32F2F', marginBottom: 16 }}>
               {editingId ? '💾 Save Changes' : 'Add Item'}
             </button>
 
-            {/* Category Filter Tabs */}
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
               {['All', ...CATEGORIES].map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: 20,
-                    border: '1px solid #ddd',
-                    background: activeCategory === cat ? '#1E1E2D' : 'white',
-                    color: activeCategory === cat ? 'white' : '#555',
-                    fontSize: 11,
-                    cursor: 'pointer',
-                    fontWeight: activeCategory === cat ? 600 : 400,
-                    transition: 'all 0.2s'
-                  }}
-                >
+                <button key={cat} onClick={() => setActiveCategory(cat)} style={{ padding: '4px 10px', borderRadius: 20, border: '1px solid #ddd', background: activeCategory === cat ? '#1E1E2D' : 'white', color: activeCategory === cat ? 'white' : '#555', fontSize: 11, cursor: 'pointer', fontWeight: activeCategory === cat ? 600 : 400, transition: 'all 0.2s' }}>
                   {cat}
                 </button>
               ))}
             </div>
 
-            {/* Items List */}
             <div style={{ maxHeight: 380, overflowY: 'auto' }}>
               {filteredItems.length === 0 && (
-                <div style={{ textAlign: 'center', color: '#bbb', padding: 20, fontSize: 13 }}>
-                  No items yet
-                </div>
+                <div style={{ textAlign: 'center', color: '#bbb', padding: 20, fontSize: 13 }}>No items yet</div>
               )}
               {filteredItems.map(item => (
-                <div
-                  key={item._id}
-                  style={{
-                    background: editingId === item._id ? '#EEF2FF' : 'white',
-                    border: `1px solid ${editingId === item._id ? '#C7D2FE' : '#eee'}`,
-                    borderRadius: 10,
-                    padding: '10px 12px',
-                    marginBottom: 8,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {/* Item image */}
+                <div key={item._id} style={{ background: editingId === item._id ? '#EEF2FF' : 'white', border: `1px solid ${editingId === item._id ? '#C7D2FE' : '#eee'}`, borderRadius: 10, padding: '10px 12px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10, transition: 'all 0.2s' }}>
                   <div style={{ width: 42, height: 42, background: '#eee', borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
-                    {item.image && (
-                      <img
-                        src={`http://localhost:5000${item.image}`}
-                        alt={item.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
+                    {item.image && item.image.trim() !== '' && (
+                      <img src={`${API}${item.image}`} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
                     )}
                   </div>
-
-                  {/* Item info */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {item.name}
-                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
                     <div style={{ fontSize: 11, color: '#999' }}>₹{item.price} · {item.category}</div>
                   </div>
-
-                  {/* Edit + Delete buttons */}
                   <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                    <button
-                      onClick={() => handleEdit(item)}
-                      style={{
-                        background: editingId === item._id ? '#6366F1' : '#F0F0F0',
-                        border: 'none',
-                        borderRadius: 8,
-                        width: 30, height: 30,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 14,
-                        transition: 'background 0.2s'
-                      }}
-                      title="Edit item"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      onClick={() => deleteItem(item._id)}
-                      style={{
-                        background: '#FEE2E2',
-                        border: 'none',
-                        borderRadius: 8,
-                        width: 30, height: 30,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 14,
-                        transition: 'background 0.2s'
-                      }}
-                      title="Delete item"
-                    >
-                      🗑️
-                    </button>
+                    <button onClick={() => handleEdit(item)} style={{ background: editingId === item._id ? '#6366F1' : '#F0F0F0', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, transition: 'background 0.2s' }} title="Edit item">✏️</button>
+                    <button onClick={() => deleteItem(item._id)} style={{ background: '#FEE2E2', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, transition: 'background 0.2s' }} title="Delete item">🗑️</button>
                   </div>
                 </div>
               ))}

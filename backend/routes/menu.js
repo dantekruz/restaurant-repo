@@ -19,7 +19,7 @@ const upload = multer({ storage });
 router.get('/', async (req, res) => {
   try {
     const { category } = req.query;
-    const filter = category ? { category, available: true } : { available: true };
+    const filter = category ? { category } : {};
     const items = await MenuItem.find(filter);
     res.json(items);
   } catch (err) {

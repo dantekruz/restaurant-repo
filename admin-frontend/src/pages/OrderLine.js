@@ -150,7 +150,7 @@ const StatusDropdown = ({ order, onUpdate }) => {
               key={s}
               onClick={() => { onUpdate(order._id, s); setOpen(false); }}
               style={{
-                padding: '11px 14px', cursor: 'pointer', fontSize: 15,
+                padding: '11px 14px', cursor: 'pointer', fontSize: 13,
                 fontWeight: s === order.status ? 700 : 400,
                 color: s === order.status ? statusColor(s) : '#333',
                 background: s === order.status ? `${statusColor(s)}15` : 'white',
@@ -267,7 +267,7 @@ const OrderCard = ({ order, onUpdate }) => {
           <div
             key={i}
             style={{
-              fontSize: 15,
+              fontSize: 13,
               fontWeight: 400,
               color: '#333',
               marginBottom: 7,
@@ -299,7 +299,7 @@ const OrderLine = () => {
 
   const fetchOrders = useCallback(async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/orders', { headers });
+      const res = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/orders`, { headers });
       setOrders(res.data);
     } catch {}
   }, []);
@@ -314,7 +314,7 @@ const OrderLine = () => {
   const connectSSE = () => {
     if (esRef.current) esRef.current.close();
     const es = new EventSource(
-      `http://localhost:5000/api/orders/stream/admin-${adminUser.id || 'main'}`
+      `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/orders/stream/admin-${adminUser.id || 'main'}`
     );
     es.onmessage = (e) => {
       try {
@@ -348,7 +348,7 @@ const OrderLine = () => {
 
   const updateStatus = useCallback(async (id, status) => {
     try {
-      await axios.put(`http://localhost:5000/api/orders/${id}`, { status }, { headers });
+      await axios.put(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/orders/${id}`, { status }, { headers });
       setOrders(prev => prev.map(o => o._id === id ? { ...o, status } : o));
     } catch {}
   }, []);
