@@ -78,14 +78,6 @@ npm start       # runs on http://localhost:3001
 
 ---
 
-## 🚀 Deployment Links Format
-
-```
-https://user-frontend-link.com, https://admin-frontend-link.com, https://backend-link.com, https://github.com/username/repo
-```
-
----
-
 ## 📱 Pages
 
 ### Admin Side
