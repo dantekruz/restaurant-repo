@@ -1,7 +1,18 @@
 # 🍽️ Restaurant Management System — MERN Stack
 
-## Project Structure
+## 🔗 Live Links
 
+| Service | URL |
+|---------|-----|
+| 🖥️ Admin Frontend | [restaurant-admin-frontend-seven.vercel.app](https://restaurant-admin-frontend-seven.vercel.app/) |
+| 📱 User Frontend | [restaurant-user-frontend-2h45byo90-dantekruzs-projects.vercel.app](https://restaurant-user-frontend-2h45byo90-dantekruzs-projects.vercel.app/) |
+| ⚙️ Backend API | [restaurant-backend-rzi7.onrender.com](https://restaurant-backend-rzi7.onrender.com) |
+
+> ⚠️ **Note:** Backend is on Render's free tier — first request after 15 min idle may take ~30s to wake up.
+
+---
+
+## Project Structure
 ```
 restaurant-app/
 ├── backend/              ← Node.js + Express + MongoDB
@@ -14,23 +25,21 @@ restaurant-app/
 ## ⚙️ Setup Instructions
 
 ### 1. Backend
-
 ```bash
 cd backend
 npm install
 ```
-
 Create `.env` file (copy from `.env.example`):
 ```
 MONGO_URI=mongodb+srv://<user>:<pass>@cluster0.mongodb.net/restaurant
 JWT_SECRET=your_secret_key_here
 EMAIL_USER=your_gmail@gmail.com
 EMAIL_PASS=your_gmail_app_password
+ADMIN_URL=https://restaurant-admin-frontend-seven.vercel.app
+USER_URL=https://restaurant-user-frontend-2h45byo90-dantekruzs-projects.vercel.app
 PORT=5000
 ```
-
 > ⚠️ For Gmail OTP: Enable 2FA → Generate App Password → use that as EMAIL_PASS
-
 ```bash
 npm run dev     # development
 npm start       # production
@@ -39,18 +48,21 @@ npm start       # production
 ---
 
 ### 2. Admin Frontend
-
 ```bash
 cd admin-frontend
 npm install
 npm start       # runs on http://localhost:3000
 ```
 
+Create `.env` file:
+```
+REACT_APP_API_URL=https://restaurant-backend-rzi7.onrender.com
+```
+
 **First Admin Account:** Register via API or directly create in MongoDB:
 ```json
 { "role": "admin" }
 ```
-
 Or use this seed script in backend:
 ```bash
 node -e "
@@ -69,11 +81,15 @@ mongoose.connect(process.env.MONGO_URI).then(async () => {
 ---
 
 ### 3. User Frontend
-
 ```bash
 cd user-frontend
 npm install
 npm start       # runs on http://localhost:3001
+```
+
+Create `.env` file:
+```
+REACT_APP_API_URL=https://restaurant-backend-rzi7.onrender.com
 ```
 
 ---
